@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.text(); // IMPORTANT: raw body
+    const body = await req.text();
     const signature = req.headers.get("x-razorpay-signature");
 
     if (!signature) {
@@ -22,36 +22,46 @@ export async function POST(req: NextRequest) {
 
     const event = JSON.parse(body);
 
-    // Only act on successful payment
-    if (event.event !== "payment.captured") {
-      return NextResponse.json({ received: true });
-    }
+    // 🔵 Subscription Activated (first successful payment)
+    if (event.event === "subscription.activated") {
+      const sub = event.payload.subscription.entity;
 
-    const payment = event.payload.payment.entity;
-    const notes = payment.notes;
-
-    const email = notes.email;
-    const plan = notes.plan;
-
-    if (!email || !plan) {
-      return NextResponse.json({ error: "Missing metadata" }, { status: 400 });
-    }
-
-    if (plan === "pro") {
       await prisma.user.update({
-        where: { email },
+        where: { email: sub.notes.email },
         data: {
-          plan: "pro",
-          credits: 50,
+          plan: sub.notes.plan,
+          subscriptionId: sub.id,
+          subscriptionStatus: "active",
+          credits: sub.notes.plan === "pro" ? 50 : 999999,
         },
       });
     }
 
-    if (plan === "elite") {
+    // 🔵 Subscription Charged (monthly renewal)
+    if (event.event === "subscription.charged") {
+      const sub = event.payload.subscription.entity;
+
+      if (sub.notes.plan === "pro") {
+        await prisma.user.update({
+          where: { email: sub.notes.email },
+          data: {
+            credits: 50, // monthly refill
+          },
+        });
+      }
+    }
+
+    // 🔴 Subscription Cancelled
+    if (event.event === "subscription.cancelled") {
+      const sub = event.payload.subscription.entity;
+
       await prisma.user.update({
-        where: { email },
+        where: { email: sub.notes.email },
         data: {
-          plan: "elite",
+          plan: "free",
+          subscriptionStatus: "cancelled",
+          subscriptionId: null,
+          credits: 3,
         },
       });
     }
