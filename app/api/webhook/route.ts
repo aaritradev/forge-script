@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
         subscriptionStatus: "expired",
         subscriptionId: null,
         credits: 3,
+        },
       });
     }
 
