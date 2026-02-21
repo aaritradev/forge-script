@@ -21,8 +21,8 @@ export default function Home() {
 
   const [credits, setCredits] = useState<number>(0);
   const [plan, setPlan] = useState<string>('free');
+  const [isCancelling, setIsCancelling] = useState(false);
 
-  // Fetch user data
   const fetchUserData = async () => {
     try {
       const res = await fetch('/api/me', { cache: 'no-store' });
@@ -72,7 +72,6 @@ export default function Home() {
 
       setScript(result);
 
-      // Update credits only if not elite
       if (plan !== 'elite' && typeof result.remainingCredits === 'number') {
         setCredits(result.remainingCredits);
       }
@@ -85,6 +84,32 @@ export default function Home() {
       );
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!confirm("Cancel subscription at end of billing cycle?")) return;
+
+    setIsCancelling(true);
+
+    try {
+      const res = await fetch('/api/cancel-subscription', {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        alert("Cancellation failed.");
+        return;
+      }
+
+      alert("Subscription will cancel at the end of your billing cycle.");
+
+      await fetchUserData();
+
+    } catch (err) {
+      alert("Something went wrong.");
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -106,14 +131,13 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-neutral-200 pb-20 selection:bg-red-600 selection:text-white overflow-x-hidden">
+    <div className="min-h-screen bg-black text-neutral-200 pb-20 overflow-x-hidden">
 
       {view === 'landing' ? (
         <Landing onEnter={enterForge} />
       ) : (
         <>
-          {/* NAVBAR */}
-          <nav className="relative z-20 px-6 py-8 flex justify-between items-center max-w-7xl mx-auto">
+          <nav className="px-6 py-8 flex justify-between items-center max-w-7xl mx-auto">
 
             <button
               onClick={() => setView('landing')}
@@ -122,17 +146,9 @@ export default function Home() {
               FORGE<span className="text-red-600">SCRIPT</span>
             </button>
 
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-6">
 
-              {/* Credits Display */}
               <div className="px-4 py-1.5 border border-zinc-800 bg-black/40 rounded-full flex items-center gap-2">
-                <div
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    plan === 'elite' || credits > 0
-                      ? 'bg-red-600 animate-pulse'
-                      : 'bg-zinc-700'
-                  }`}
-                />
                 <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-400">
                   {plan === 'elite'
                     ? 'Unlimited'
@@ -140,95 +156,54 @@ export default function Home() {
                 </span>
               </div>
 
-              {/* Upgrade Button */}
-              {user && plan !== 'elite' && (
+              {user && plan === 'free' && (
                 <button
                   onClick={() => (window.location.href = '/upgrade')}
-                  className="text-[10px] uppercase font-bold tracking-widest text-zinc-400 hover:text-red-500 transition-colors"
+                  className="text-xs uppercase tracking-widest text-zinc-400 hover:text-red-500 transition"
                 >
                   Upgrade
                 </button>
               )}
 
-              {/* User Info */}
-              {user && (
-                <>
-                  <div className="hidden md:flex flex-col items-end leading-none">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white">
-                      {user.name}
-                    </span>
-                    <button
-                      onClick={() => signOut()}
-                      className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-600 hover:text-red-500 transition-colors"
-                    >
-                      Logout
-                    </button>
-                  </div>
+              {user && plan !== 'free' && (
+                <button
+                  onClick={handleCancelSubscription}
+                  disabled={isCancelling}
+                  className="text-xs uppercase tracking-widest text-red-500 hover:text-red-400 transition"
+                >
+                  {isCancelling ? "Cancelling..." : "Cancel Subscription"}
+                </button>
+              )}
 
-                  {user.image && (
-                    <img
-                      src={user.image}
-                      alt="profile"
-                      className="w-9 h-9 border border-zinc-800 p-0.5 rounded-full"
-                    />
-                  )}
-                </>
+              {user && (
+                <button
+                  onClick={() => signOut()}
+                  className="text-xs uppercase tracking-widest text-zinc-600 hover:text-red-500 transition"
+                >
+                  Logout
+                </button>
               )}
 
             </div>
           </nav>
 
-          {/* HEADER */}
-          <header className="relative z-10 pt-8 pb-12 px-6 text-center">
-            <h1 className="font-display text-5xl md:text-7xl font-black uppercase tracking-tighter mb-4 text-gradient">
-              The Forge
-            </h1>
-            <p className="max-w-md mx-auto text-neutral-500 text-sm uppercase tracking-wide leading-relaxed">
-              Define the struggle. Choose the tone. Build the legend.
-            </p>
-          </header>
+          <main className="max-w-4xl mx-auto px-6">
 
-          {/* MAIN */}
-          <main className="relative z-10 max-w-4xl mx-auto px-6">
-
-            <div className="mb-16">
-              <ScriptForm
-                onGenerate={handleGenerate}
-                isLoading={isLoading}
-                disabled={
-                  !isAuthenticated ||
-                  (plan !== 'elite' && credits <= 0)
-                }
-              />
-            </div>
+            <ScriptForm
+              onGenerate={handleGenerate}
+              isLoading={isLoading}
+              disabled={!isAuthenticated || (plan !== 'elite' && credits <= 0)}
+            />
 
             {error && (
-              <div className="mb-12 glass p-4 border border-red-900/50 text-red-500 text-center font-bold uppercase text-xs tracking-widest">
+              <div className="mt-6 p-4 border border-red-900/50 text-red-500 text-center text-xs uppercase tracking-widest">
                 {error}
-              </div>
-            )}
-
-            {isLoading && !script && (
-              <div className="flex flex-col items-center justify-center py-20 space-y-6">
-                <div className="w-16 h-16 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="font-display uppercase text-xs tracking-[0.4em] text-white animate-pulse">
-                  Forging Your Script...
-                </p>
               </div>
             )}
 
             {script && !isLoading && (
               <div className="mt-12">
                 <ScriptDisplay script={script} />
-                <button
-                  onClick={() => {
-                    setScript(null);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  className="mt-12 text-[10px] uppercase font-bold tracking-widest text-neutral-600 hover:text-red-500 w-full"
-                >
-                  ← New Session
-                </button>
               </div>
             )}
 
