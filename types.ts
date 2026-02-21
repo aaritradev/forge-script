@@ -6,7 +6,6 @@ export enum Tone {
 }
 
 export interface ScriptRequest {
-  script: string;
   topic: string;
   tone: Tone;
   duration: 15 | 30 | 60;
