@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       const subscription = event.payload.subscription.entity;
 
     await prisma.user.update({
-      where: { subscriptionId: subscription.id },
+      where: { email: subscription.notes.email },
       data: {
         plan: "free",
         subscriptionStatus: "expired",
