@@ -21,11 +21,13 @@ export default function Home() {
 
   const [credits, setCredits] = useState<number>(0);
   const [plan, setPlan] = useState<string>('free');
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
 
-  // ✅ NEW
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
-  // Fetch user data
+  const isSubscriptionPlan = plan === 'elite' || plan === 'pro';
+
   const fetchUserData = async () => {
     try {
       const res = await fetch('/api/me', { cache: 'no-store' });
@@ -34,6 +36,7 @@ export default function Home() {
       const data = await res.json();
       setCredits(data.credits ?? 0);
       setPlan(data.plan ?? 'free');
+      setSubscriptionStatus(data.subscriptionStatus ?? null);
     } catch (err) {
       console.error('Failed to fetch user data:', err);
     }
@@ -82,9 +85,7 @@ export default function Home() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Something went wrong.'
-      );
+      setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
       setIsLoading(false);
     }
@@ -99,10 +100,7 @@ export default function Home() {
     }
   };
 
-  // ✅ NEW CANCEL FUNCTION
   const handleCancelSubscription = async () => {
-    if (!confirm('Are you sure you want to cancel your subscription?')) return;
-
     try {
       setIsCancelling(true);
 
@@ -114,11 +112,11 @@ export default function Home() {
         throw new Error('Failed to cancel subscription');
       }
 
-      await fetchUserData(); // refresh plan
+      setSubscriptionStatus('cancelled');
+      setShowCancelModal(false);
 
-      alert('Subscription cancelled successfully.');
     } catch (err) {
-      alert('Error cancelling subscription.');
+      console.error('Cancel error:', err);
     } finally {
       setIsCancelling(false);
     }
@@ -139,7 +137,6 @@ export default function Home() {
         <Landing onEnter={enterForge} />
       ) : (
         <>
-          {/* NAVBAR */}
           <nav className="relative z-20 px-6 py-8 flex justify-between items-center max-w-7xl mx-auto">
 
             <button
@@ -151,7 +148,6 @@ export default function Home() {
 
             <div className="flex items-center gap-8">
 
-              {/* Credits Display */}
               <div className="px-4 py-1.5 border border-zinc-800 bg-black/40 rounded-full flex items-center gap-2">
                 <div
                   className={`w-1.5 h-1.5 rounded-full ${
@@ -167,8 +163,26 @@ export default function Home() {
                 </span>
               </div>
 
-              {/* Upgrade Button */}
-              {user && plan !== 'elite' && (
+              {/* Cancel for Pro + Elite */}
+              {user && isSubscriptionPlan && subscriptionStatus !== 'cancelled' && (
+                <button
+                  onClick={() => setShowCancelModal(true)}
+                  disabled={isCancelling}
+                  className="text-[10px] uppercase font-bold tracking-widest text-red-500 hover:text-red-400 transition-colors disabled:text-zinc-600"
+                >
+                  {isCancelling ? 'Cancelling...' : 'Cancel Subscription'}
+                </button>
+              )}
+
+              {/* Cancelled State */}
+              {user && isSubscriptionPlan && subscriptionStatus === 'cancelled' && (
+                <span className="text-[10px] uppercase font-bold tracking-widest text-zinc-500">
+                  Cancelled (Active Until Period Ends)
+                </span>
+              )}
+
+              {/* Upgrade only if free */}
+              {user && plan === 'free' && (
                 <button
                   onClick={() => (window.location.href = '/upgrade')}
                   className="text-[10px] uppercase font-bold tracking-widest text-zinc-400 hover:text-red-500 transition-colors"
@@ -177,18 +191,6 @@ export default function Home() {
                 </button>
               )}
 
-              {/* ✅ CANCEL BUTTON (ONLY ELITE) */}
-              {user && plan === 'elite' && (
-                <button
-                  onClick={handleCancelSubscription}
-                  disabled={isCancelling}
-                  className="text-[10px] uppercase font-bold tracking-widest text-red-500 hover:text-red-400 transition-colors"
-                >
-                  {isCancelling ? 'Cancelling...' : 'Cancel Subscription'}
-                </button>
-              )}
-
-              {/* User Info */}
               {user && (
                 <>
                   <div className="hidden md:flex flex-col items-end leading-none">
@@ -212,11 +214,9 @@ export default function Home() {
                   )}
                 </>
               )}
-
             </div>
           </nav>
 
-          {/* HEADER */}
           <header className="relative z-10 pt-8 pb-12 px-6 text-center">
             <h1 className="font-display text-5xl md:text-7xl font-black uppercase tracking-tighter mb-4 text-gradient">
               The Forge
@@ -226,7 +226,6 @@ export default function Home() {
             </p>
           </header>
 
-          {/* MAIN */}
           <main className="relative z-10 max-w-4xl mx-auto px-6">
 
             <div className="mb-16">
@@ -269,9 +268,42 @@ export default function Home() {
                 </button>
               </div>
             )}
-
           </main>
         </>
+      )}
+
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 w-[90%] max-w-md">
+
+            <h2 className="text-xl font-black uppercase tracking-widest text-white mb-4">
+              Cancel {plan.toUpperCase()} Subscription
+            </h2>
+
+            <p className="text-sm text-zinc-400 mb-8 leading-relaxed">
+              Are you sure you want to cancel your {plan} access?
+              <br />
+              You will retain access until the end of your billing cycle.
+            </p>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="flex-1 py-3 border border-zinc-700 rounded-xl text-xs uppercase font-bold tracking-widest text-zinc-400 hover:border-zinc-500 transition"
+              >
+                Keep Subscription
+              </button>
+
+              <button
+                onClick={handleCancelSubscription}
+                disabled={isCancelling}
+                className="flex-1 py-3 rounded-xl text-xs uppercase font-black tracking-widest bg-red-600 hover:bg-red-700 text-white transition disabled:opacity-50"
+              >
+                {isCancelling ? 'Cancelling...' : 'Yes, Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

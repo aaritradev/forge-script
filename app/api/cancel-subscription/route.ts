@@ -27,7 +27,14 @@ export async function POST() {
   await razorpay.subscriptions.cancel(
   user.subscriptionId!,
   true // true = cancel at cycle end (recommended)
-);
+  );
+
+  await prisma.user.update({
+  where: { id: user.id },
+  data: {
+    subscriptionStatus: "cancelled",
+  },
+  });
 
   return NextResponse.json({ success: true });
 }

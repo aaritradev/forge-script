@@ -52,17 +52,16 @@ export async function POST(req: NextRequest) {
     }
 
     // 🔴 Subscription Cancelled
-    if (event.event === "subscription.cancelled") {
-      const sub = event.payload.subscription.entity;
+    if (event.event === "subscription.completed") {
+      const subscription = event.payload.subscription.entity;
 
-      await prisma.user.update({
-        where: { email: sub.notes.email },
-        data: {
-          plan: "free",
-          subscriptionStatus: "cancelled",
-          subscriptionId: null,
-          credits: 3,
-        },
+    await prisma.user.update({
+      where: { subscriptionId: subscription.id },
+      data: {
+        plan: "free",
+        subscriptionStatus: "expired",
+        subscriptionId: null,
+        credits: 3,
       });
     }
 

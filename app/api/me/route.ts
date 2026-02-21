@@ -21,7 +21,8 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    credits: user.credits,
-    plan: user.plan,
+  credits: user.credits,
+  plan: user.plan,
+  subscriptionStatus: user.subscriptionStatus,
   });
 }
