@@ -24,9 +24,10 @@ export async function POST() {
     key_secret: process.env.RAZORPAY_KEY_SECRET!,
   });
 
-  await razorpay.subscriptions.cancel(user.subscriptionId, {
-    cancel_at_cycle_end: false, // true if you want graceful cancel
-  });
+  await razorpay.subscriptions.cancel(
+  user.subscriptionId!,
+  true // true = cancel at cycle end (recommended)
+);
 
   return NextResponse.json({ success: true });
 }
