@@ -29,9 +29,9 @@ export async function forgeScriptAction(
     });
   }
 
-  if (user.plan !== "elite" && user.credits <= 0) {
+  if (user.monthlyCredits <= 0 && user.credits <= 0) {
   throw new Error("No credits remaining.");
-  }
+}
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY missing.");
@@ -167,21 +167,43 @@ Target duration: ${params.duration} seconds.
       throw new Error("Model did not return 3 variations.");
     }
 
-    let remainingCredits = user.credits;
+// ---- CREDIT LOGIC ----
 
-  if (user.plan !== "elite") {
+let remainingCredits = user.credits;
+let remainingMonthly = user.monthlyCredits;
+
+// Block if no usable credits
+if (user.monthlyCredits <= 0 && user.credits <= 0) {
+  throw new Error("No credits remaining.");
+}
+
+// Use monthly first
+if (user.monthlyCredits > 0) {
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: { monthlyCredits: { decrement: 1 } }
+  });
+
+  remainingMonthly = updatedUser.monthlyCredits;
+
+} else {
   const updatedUser = await prisma.user.update({
     where: { id: user.id },
     data: { credits: { decrement: 1 } }
   });
 
   remainingCredits = updatedUser.credits;
-  }
+}
 
-    return {
-      ...parsed,
-      remainingCredits
-    };
+// ---- RETURN ----
+
+return {
+  ...parsed,
+  remainingCredits:
+    remainingMonthly > 0
+      ? remainingMonthly
+      : remainingCredits
+};
 
   } catch (error) {
     console.error("Forge Action Error:", error);

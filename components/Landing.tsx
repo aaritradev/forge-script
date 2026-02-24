@@ -84,7 +84,7 @@ const Landing: React.FC<LandingProps> = ({ onEnter }) => {
             onClick={onEnter}
             className="px-12 py-5 bg-red-600 text-white font-display text-xs font-black uppercase tracking-[0.4em] hover:bg-red-700 transition-colors"
           >
-            Verify Identity to Enter
+            Login to Enter
           </button>
         </div>
       </section>

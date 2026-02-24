@@ -30,24 +30,43 @@ export async function POST(req: NextRequest) {
   }
 
   // Update based on purchased plan
-  if (selectedPlan === "pro") {
-    await prisma.user.update({
-      where: { email: session.user.email },
-      data: {
-        plan: "pro",
-        credits: 50,
-      },
-    });
-  }
+  // PRO
+if (selectedPlan === "pro") {
+  await prisma.user.update({
+    where: { email: session.user.email },
+    data: {
+      plan: "pro",
+      subscriptionStatus: "active",
+      monthlyCredits: 50,
+      lastCreditReset: new Date(),
+    },
+  });
+}
 
-  if (selectedPlan === "elite") {
-    await prisma.user.update({
-      where: { email: session.user.email },
-      data: {
-        plan: "elite",
-      },
-    });
-  }
+// ELITE
+if (selectedPlan === "elite") {
+  await prisma.user.update({
+    where: { email: session.user.email },
+    data: {
+      plan: "elite",
+      subscriptionStatus: "active",
+      monthlyCredits: 100,
+      lastCreditReset: new Date(),
+    },
+  });
+}
+
+// CREDIT PACKS (UNCHANGED)
+if (selectedPlan === "credit10" || selectedPlan === "credit20") {
+  const creditsToAdd = selectedPlan === "credit10" ? 10 : 20;
+
+  await prisma.user.update({
+    where: { email: session.user.email },
+    data: {
+      credits: { increment: creditsToAdd },
+    },
+  });
+}
 
   return NextResponse.json({ success: true });
 }

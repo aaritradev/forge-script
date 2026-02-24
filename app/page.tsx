@@ -25,6 +25,7 @@ export default function Home() {
 
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [totalCredits, setTotalCredits] = useState<number>(0);
 
   const isSubscriptionPlan = plan === 'elite' || plan === 'pro';
 
@@ -35,6 +36,7 @@ export default function Home() {
 
       const data = await res.json();
       setCredits(data.credits ?? 0);
+      setTotalCredits(data.totalCredits ?? 0);
       setPlan(data.plan ?? 'free');
       setSubscriptionStatus(data.subscriptionStatus ?? null);
     } catch (err) {
@@ -157,9 +159,7 @@ export default function Home() {
                   }`}
                 />
                 <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-400">
-                  {plan === 'elite'
-                    ? 'Unlimited'
-                    : `${credits} Forges`}
+                  {`${totalCredits} Forges`}
                 </span>
               </div>
 
@@ -228,8 +228,28 @@ export default function Home() {
 
           <main className="relative z-10 max-w-4xl mx-auto px-6">
 
-            <div className="mb-16">
-              <ScriptForm
+  {/* OUT OF CREDITS BLOCK - ADDED */}
+  {isAuthenticated && plan !== 'elite' && credits <= 0 && (
+    <div className="mb-12 border border-red-900/50 bg-black/40 backdrop-blur-sm rounded-2xl p-8 text-center">
+      <h2 className="text-xl font-black uppercase tracking-widest text-red-500 mb-4">
+        You’ve Run Out of Forges
+      </h2>
+
+      <p className="text-zinc-400 text-sm mb-8">
+        Your legend pauses here. Continue forging by purchasing more credits.
+      </p>
+
+      <button
+        onClick={() => (window.location.href = '/upgrade?tab=credits')}
+        className="px-8 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-widest transition"
+      >
+        Buy Credits
+      </button>
+    </div>
+  )}
+
+  <div className="mb-16">
+    <ScriptForm
                 onGenerate={handleGenerate}
                 isLoading={isLoading}
                 disabled={

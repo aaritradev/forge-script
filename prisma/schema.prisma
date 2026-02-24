@@ -12,14 +12,20 @@ model User {
   email              String   @unique
   emailVerified      DateTime?
   image              String?
+
+  // 🔥 Credit System
   credits            Int      @default(3)
+  monthlyCredits     Int      @default(0)
+  lastCreditReset    DateTime?
+
   plan               String   @default("free")
   subscriptionId     String?
   subscriptionStatus String?
+
   createdAt          DateTime @default(now())
 
-  accounts      Account[]
-  sessions      Session[]
+  accounts           Account[]
+  sessions           Session[]
 }
 
 model Account {

@@ -30,7 +30,11 @@ const ScriptDisplay: React.FC<ScriptDisplayProps> = ({ script }) => {
     fullText += `---\n\n`;
     fullText += `VISUAL SCENES:\n${script.visualSuggestions.map(s => `- ${s}`).join('\n')}\n\n`;
     fullText += `CAPTION:\n${script.caption}\n\n`;
-    fullText += `HASHTAGS:\n${script.hashtags.map(h => `#${h}`).join(' ')}`;
+    const cleanedTags = script.hashtags
+    .map(tag => tag.replace(/^#+/, '').trim())
+    .filter(Boolean);
+
+    fullText += `HASHTAGS:\n${cleanedTags.map(tag => `#${tag}`).join(' ')}`;
     
     navigator.clipboard.writeText(fullText);
     triggerFeedback('full');
