@@ -42,28 +42,32 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // 🟢 CREDIT PACKS (ONE-TIME ORDER)
-  if (plan === "credit10" || plan === "credit20") {
+  // CREDIT PACKS (DISPLAY USD, CHARGE INR)
 
-    const amount =
-      plan === "credit10" ? 500 : 1000; // ₹5 or ₹10 equivalent (in paise)
+if (plan === "credit10" || plan === "credit20") {
 
-    const order = await razorpay.orders.create({
-      amount,
-      currency: "USD",
-      receipt: `receipt_${Date.now()}`,
-      notes: {
-        email: session.user.email,
-        plan,
-      },
-    });
+  const amount =
+    plan === "credit10"
+      ? 50000   // ₹500
+      : 100000; // ₹1000
 
-    return NextResponse.json({
-      type: "order",
-      orderId: order.id,
-      key: process.env.RAZORPAY_KEY_ID,
-    });
-  }
+  const order = await razorpay.orders.create({
+    amount,              // in paise
+    currency: "INR",     // still INR
+    receipt: `receipt_${Date.now()}`,
+    notes: {
+      email: session.user.email,
+      plan,
+      display_price: plan === "credit10" ? "$5" : "$10",
+    },
+  });
+
+  return NextResponse.json({
+    type: "order",
+    orderId: order.id,
+    key: process.env.RAZORPAY_KEY_ID,
+  });
+}
 
   return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
 }

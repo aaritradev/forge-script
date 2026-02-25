@@ -136,10 +136,13 @@ export default function UpgradePage({ credits = 0 }: { credits?: number }) {
               <div className="border border-zinc-800 rounded-3xl p-12 flex flex-col">
                 <h2 className="text-2xl font-bold mb-6 text-zinc-400">PRO</h2>
 
-                <div className="text-5xl font-black mb-8">
+                <div className="text-5xl font-black mb-2">
                   $19
                   <span className="text-lg font-medium text-zinc-500"> / month</span>
-                </div>
+                  </div>
+                  <p className="text-xs text-zinc-500">
+                    Charged as local currency equivalent (~₹1900)
+                    </p>
 
                 <ul className="space-y-4 text-zinc-400 mb-12 flex-grow">
                   <li>• 50 Scripts / Month</li>
@@ -160,10 +163,13 @@ export default function UpgradePage({ credits = 0 }: { credits?: number }) {
               <div className="border border-red-600 rounded-3xl p-12 flex flex-col">
                 <h2 className="text-2xl font-bold mb-6 text-white">ELITE</h2>
 
-                <div className="text-5xl font-black mb-8">
+                <div className="text-5xl font-black mb-2">
                   $39
                   <span className="text-lg font-medium text-zinc-500"> / month</span>
-                </div>
+                  </div>
+                  <p className="text-xs text-zinc-500">
+                    Charged as local currency equivalent (~₹3900)
+                    </p>
 
                 <ul className="space-y-4 text-zinc-400 mb-12 flex-grow">
                   <li>• 100 Scripts / Month</li>
@@ -188,7 +194,10 @@ export default function UpgradePage({ credits = 0 }: { credits?: number }) {
 
               <div className="border border-zinc-800 rounded-2xl p-8 text-center">
                 <h3 className="text-xl font-bold mb-4">10 Credits</h3>
-                <div className="text-3xl font-black mb-6">$5</div>
+                <div className="text-3xl font-black mb-2">$5</div>
+                <p className="text-xs text-zinc-500 mb-6">
+                  Charged as local currency equivalent (~₹500)
+                  </p>
                 <button
                   onClick={() => handleSubscribe("credit10")}
                   className="w-full border border-zinc-700 py-3 rounded-xl text-sm font-bold uppercase tracking-widest hover:border-red-600 hover:text-red-500 transition"
@@ -199,7 +208,10 @@ export default function UpgradePage({ credits = 0 }: { credits?: number }) {
 
               <div className="border border-zinc-800 rounded-2xl p-8 text-center">
                 <h3 className="text-xl font-bold mb-4">20 Credits</h3>
-                <div className="text-3xl font-black mb-6">$10</div>
+                <div className="text-3xl font-black mb-2">$10</div>
+                <p className="text-xs text-zinc-500 mb-6">
+                  Charged as local currency equivalent (~₹1000)
+                  </p>
                 <button
                   onClick={() => handleSubscribe("credit20")}
                   className="w-full border border-zinc-700 py-3 rounded-xl text-sm font-bold uppercase tracking-widest hover:border-red-600 hover:text-red-500 transition"
