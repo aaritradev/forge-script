@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
-import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import prisma from "@/lib/prisma";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -16,7 +16,7 @@ export async function POST() {
       where: { email: session.user.email },
     });
 
-    if (!user?.subscriptionId) {
+    if (!user || !user.subscriptionId) {
       return NextResponse.json(
         { error: "No active subscription found" },
         { status: 400 }
@@ -28,12 +28,10 @@ export async function POST() {
       key_secret: process.env.RAZORPAY_KEY_SECRET!,
     });
 
-    // Cancel at period end
-    await razorpay.subscriptions.cancel(
-  user.subscriptionId,
-  true // cancel at cycle end
-  );
+    // Cancel subscription immediately
+    await razorpay.subscriptions.cancel(user.subscriptionId);
 
+    // Update DB
     await prisma.user.update({
       where: { email: session.user.email },
       data: {
@@ -42,10 +40,10 @@ export async function POST() {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Cancel error:", error);
+  } catch (error: any) {
+    console.error("Cancel subscription error:", error);
     return NextResponse.json(
-      { error: "Failed to cancel subscription" },
+      { error: error?.message || "Cancellation failed" },
       { status: 500 }
     );
   }
